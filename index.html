@@ -55,6 +55,12 @@ nav.seats a.active{background:var(--felt);border-color:var(--felt);color:var(--c
 .dots{color:var(--felt);letter-spacing:1px;font-size:12px;white-space:nowrap}
 .tags{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .simd{font-size:12px;color:var(--muted)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0 0}
+.filters .fl{font-family:var(--display);font-weight:600;font-size:15px}
+.filters button{font:inherit;font-size:14px;padding:5px 12px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--felt);border-color:var(--felt);color:var(--card)}
+.fcount{color:var(--muted);font-size:13px}
+.voices p{margin:6px 0 0;max-width:72ch;font-size:14.5px}
 .legend .box b{font-family:var(--display);font-size:15px;display:block;margin-bottom:4px}
 .tierkey{display:flex;flex-direction:column;gap:4px}
 .tierkey span{display:flex;align-items:center;gap:8px}
@@ -117,6 +123,12 @@ footer{margin-top:48px;color:var(--muted);font-size:13px;max-width:72ch}
     <div class="cert"><span class="badge m3">Sim: several hands</span><span class="badge m2">Sim: one hand</span><span class="badge m1">Not simulated</span></div></div>
   
 </div>
+<div class="filters" role="group" aria-label="Filter rules">
+  <span class="fl">Show only</span>
+  <button type="button" id="f-exp" aria-pressed="false">Experts agree</button>
+  <button type="button" id="f-sim" aria-pressed="false">Sim supports</button>
+  <span id="fcount" class="fcount"></span>
+</div>
 <div id="root"></div>
 <section class="seat" id="terminology"><h2>Terminology</h2><div class="glossary">
 <p><b>S1–S4</b>: S1 left of dealer (leads trick 1), S2 dealer's partner, S3 right of dealer, S4 dealer.</p>
@@ -151,22 +163,26 @@ function example(e){
   const st=(e.upcardState||"").toLowerCase().includes("down");
   const up=e.upcard&&e.upcard!=="?"&&!/not stated/i.test(e.upcard)?`<span class="up${st?" down":""}">${card(e.upcard)}${st?"turned down":"up"}</span>`:`<span class="meta">upcard not stated</span>`;
   const bits=[e.seat,e.round,e.trump?("trump "+e.trump):"",e.score?("score "+e.score):""].filter(Boolean).join(" · ");
-  return `<div class="ex"><span class="lbl">${esc(e.label||"Example")}${bits?" · "+esc(bits):""}</span><span class="hand">${hand||'<span class="meta">no hand posted</span>'}</span>${up}${(e.verdict||e.outcomeText)?`<span class="outcome">${verdict(e.verdict)} ${esc(e.outcomeText||"")}</span>`:(e.outcome?`<span class="outcome">${esc(e.outcome)}</span>`:"")}</div>`}
+  return `<div class="ex"><span class="lbl">${esc(e.label||"Example")}${bits?" · "+esc(bits):""}</span><span class="hand">${hand||'<span class="meta">no hand posted</span>'}</span>${up}${(e.verdict||e.outcomeText)?`<span class="outcome">${esc(e.outcomeText||"")}</span>`:(e.outcome?`<span class="outcome">${esc(e.outcome)}</span>`:"")}</div>`}
 function names(a){return (a||[]).map(esc).join(", ")}
 function rule(r){
   const ex=(r.examples||[]).map(example).join("");
   const views=(r.views&&r.views.length>1)?`<div class="views">${r.views.map((v,i)=>`<div class="v"><b>View ${i+1} · ${esc(v.who)}</b>${esc(v.view)}</div>`).join("")}</div>`:"";
   const who=[r.for&&r.for.length?`<span><span class="k">For:</span> ${names(r.for)}</span>`:"",r.against&&r.against.length?`<span><span class="k">Against:</span> ${names(r.against)}</span>`:""].join("");
   const lists=(r.variants&&r.variants.length)||(r.unknown&&r.unknown.length)?`<div class="lists">${r.variants&&r.variants.length?`<div><span class="k">Variants tested or discussed</span><ul>${r.variants.map(v=>`<li>${esc(v)}</li>`).join("")}</ul></div>`:""}${r.unknown&&r.unknown.length?`<div><span class="k">Never tested</span><ul>${r.unknown.map(v=>`<li>${esc(v)}</li>`).join("")}</ul></div>`:""}</div>`:"";
-  return `<article class="rule"><div class="head"><div class="title">${esc(r.title)} ${verdict(r.verdict)}</div>${tags(r)}</div>
-  ${r.rule?`<p class="text">${esc(r.rule.charAt(0).toUpperCase()+r.rule.slice(1))}</p>`:""}${ex}${views}${who?`<div class="who">${who}</div>`:""}
+  return `<article class="rule"><div class="head"><div class="title">${esc(r.title)}</div>${tags(r)}</div>
+  ${r.expertsSay||r.simSays?`<div class="voices">${r.expertsSay?`<p><b>Experts:</b> ${esc(r.expertsSay)}</p>`:""}${r.simSays?`<p><b>Sim:</b> ${esc(r.simSays)}</p>`:""}</div>`:""}${r.rule?`<p class="text">${esc(r.rule.charAt(0).toUpperCase()+r.rule.slice(1))}</p>`:""}${ex}${views}${who?`<div class="who">${who}</div>`:""}
   ${r.scopeText?`<p class="scope">${esc(r.scopeText)}</p>`:""}${lists}${r.ourData?`<p class="ours"><b>Michele's league database:</b> ${esc(r.ourData)}</p>`:""}</article>`}
+const F={exp:false,sim:false};
+function expertsAgree(r){const e=experts(r);return !!e&&e[0]==="x4"}
+function simSupports(r){if(r.simSupports)return r.simSupports==="yes";const sim=(r.simulated!==undefined)?r.simulated:!!r.sim;return sim}
+function visible(r){return (!F.exp||expertsAgree(r))&&(!F.sim||simSupports(r))}
 function render(){
   document.getElementById("tierkey").innerHTML=TIERS.slice(0,6).map(t=>`<span><i class="dot" style="background:var(${t[2]})"></i>${t[1]}</span>`).join("");
   document.getElementById("nav").innerHTML=SEATS.filter(s=>DATA.some(r=>r.seat===s[0])).map(s=>`<a href="#${s[0].toLowerCase()}">${s[1].split(" (")[0]}</a>`).join("")+`<a href="#terminology">Terminology</a>`;
   let out="";
   for(const [sk,sl] of SEATS){
-    const rs=DATA.filter(r=>r.seat===sk); if(!rs.length) continue;
+    const rs=DATA.filter(r=>r.seat===sk&&visible(r)); if(!rs.length) continue;
     out+=`<section class="seat" id="${sk.toLowerCase()}"><h2>${esc(sl)}</h2>`;
     for(const [pk,pl] of PHASES){
       const ps=rs.filter(r=>r.phase===pk); if(!ps.length) continue;
@@ -187,9 +203,13 @@ function render(){
   }
   document.getElementById("root").innerHTML=out;
   document.getElementById("foot").textContent=META.foot;
+  const n=DATA.filter(visible).length;document.getElementById("fcount").textContent=(F.exp||F.sim)?`${n} of ${DATA.length} rules`:"";
 }
 render();
-const navLinks=[...document.querySelectorAll("#nav a")];
+for(const [id,k] of [["f-exp","exp"],["f-sim","sim"]]){const b=document.getElementById(id);b.addEventListener("click",()=>{F[k]=!F[k];b.setAttribute("aria-pressed",String(F[k]));render();bindNav();spy();});}
+let navLinks=[];function bindNav(){navLinks=[...document.querySelectorAll("#nav a")];}
+bindNav();
+
 function spy(){const navH=document.getElementById("nav").offsetHeight+8;let cur=null;
   for(const a of navLinks){const sec=document.getElementById(a.getAttribute("href").slice(1));if(sec&&sec.getBoundingClientRect().top<=navH+4)cur=a;}
   navLinks.forEach(a=>{const on=a===cur;a.classList.toggle("active",on);if(on)a.setAttribute("aria-current","true");else a.removeAttribute("aria-current");});
