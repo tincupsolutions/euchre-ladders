@@ -133,11 +133,37 @@ a{color:var(--felt)}
 .modes button,.modes a{font-family:var(--display);font-weight:600;font-size:16px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 14px;text-decoration:none}
 .modes button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--card)}
 .mhead{font-size:14px;color:var(--muted);margin:12px 0 0}
-.sum{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin:16px 0 0}
-.sum .big{font-family:var(--display);font-weight:600;font-size:34px}
-.sum .grid{font-size:24px;letter-spacing:2px;margin:6px 0 0}
-.sum .row{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}
-.sum ol{font-size:14px;margin:12px 0 0;padding-left:22px}
+.sum{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:16px 0 0;overflow:hidden}
+.sum .hero{background:var(--felt);color:#fff;padding:22px 20px 20px;text-align:center}
+@media (prefers-color-scheme:dark){.sum .hero{background:#1f4d38}}
+.sum .kicker{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:.08em;text-transform:uppercase;opacity:.85}
+.sum .big{font-family:var(--display);font-weight:600;font-size:64px;line-height:1;margin:8px 0 2px}
+.sum .big small{font-size:30px;opacity:.75}
+.sum .word{font-family:var(--display);font-weight:600;font-size:20px}
+.sum .tiles{display:flex;justify-content:center;flex-wrap:wrap;gap:8px;margin:16px auto 0;max-width:400px}
+.sum .tile{width:40px;height:56px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;background:#fff;color:#2e7a4c;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.sum .tile.no{background:transparent;color:#fff;border:2px dashed rgba(255,255,255,.7);box-shadow:none}
+.sum .tiles.many{max-width:352px}
+.sum .tiles.many .tile{width:28px;height:38px;font-size:15px;border-radius:5px}
+.sum .list{padding:6px 18px 4px}
+.sum .hrow{display:grid;grid-template-columns:28px 1fr;gap:10px;padding:14px 0;border-bottom:1px solid var(--line)}
+.sum .hrow:last-child{border-bottom:0}
+.sum .mark{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;color:#fff;background:var(--t-call);margin-top:2px}
+.sum .mark.no{background:var(--t-pass)}
+.sum .meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.sum .seat{font-family:var(--display);font-weight:600;font-size:17px;margin-right:2px}
+.sum .meta .pill{font-size:13px;padding:1px 9px}
+.sum .mini{display:flex;gap:4px;margin:8px 0 0;align-items:center;flex-wrap:wrap}
+.sum .mini .c{width:28px;height:38px;font-size:12.5px;border-radius:5px}
+.sum .mini .c span{font-size:13px}
+.sum .mini .c.up{border:2px solid var(--felt);margin-left:8px}
+.sum .mini .c.up.down{border:2px dashed var(--muted);opacity:.55}
+.sum .pickans{margin:8px 0 0;font-size:14.5px}
+.sum .pickans b{font-family:var(--display);font-weight:600;font-size:16px}
+.sum .pickans .you{color:var(--t-pass)}
+.sum .foot{padding:4px 18px 18px;border-top:1px solid var(--line);background:var(--soft)}
+.sum .row{display:flex;gap:8px;flex-wrap:wrap;margin:0}
+.sum .foot .mhead{margin:10px 0 0}
 .shareout{font-size:13.5px;color:var(--t-call);margin:8px 0 0}
 #shareText{width:100%;box-sizing:border-box;min-height:70px;margin:6px 0 0;font:13px/1.4 ui-monospace,Menlo,monospace;padding:8px;border:1px solid var(--line);border-radius:8px}
 .toast button{font:inherit;font-size:14px;margin-left:10px;cursor:pointer;border:0;border-radius:999px;padding:3px 10px;background:var(--card);color:var(--felt)}
@@ -313,10 +339,18 @@ function summary(){
   const url=shareBase()+"score.html?"+new URLSearchParams({k:mode.kind,s:ok,n:N,...(mode.kind==="daily"?{d:st.daily.d,g:grid}:{}),...(who?{u:who}:{})});
   const text=mode.kind==="daily"?`Euchre Drill Daily 5, ${st.daily.d}: ${grid} ${ok}/5\n${url}`:`I scored ${ok}/20 on the Euchre Drill Express. Beat it: ${url}`;
   document.getElementById("mhead").textContent="";
-  document.getElementById("q").innerHTML=`<div class="sum"><div class="big">${ok} of ${N}</div>${mode.kind==="daily"?`<div class="grid">${grid}</div>`:""}
-   <ol>${mode.ids.map(id=>{const i=BYID[id],p=mode.picks[id];return `<li>${p===i.answer?"✅":"❌"} ${esc(i.seatName)} ${i.round==="R2"?"R2":"R1"} · ${esc(i.hand.join(" "))} / ${esc(i.upcard)}: ${esc(i.answer)}${p===i.answer?"":` <span class="q2">(you: ${esc(p)})</span>`}</li>`}).join("")}</ol>
-   <div class="row"><button class="next" id="share">Share</button>${mode.kind==="express"?`<button class="next" id="again">Another 20</button>`:""}<button class="next" id="back" style="background:var(--card);color:var(--felt)">Back to practice</button></div><div id="shareOut"></div>
-   ${mode.kind==="daily"?`<p class="mhead">Same five hands for everyone today. New hands tomorrow.</p>`:""}</div>`;
+  const WORD=ok===N?"Perfect":ok/N>=.8?"Sharp":ok/N>=.6?"Solid":ok/N>=.4?"Keep at it":"Rough one";
+  const kick=mode.kind==="daily"?"Daily 5 · "+new Date(st.daily.d+"T12:00:00").toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"}):"Express 20";
+  document.getElementById("q").innerHTML=`<div class="sum">
+   <div class="hero"><div class="kicker">${esc(kick)}</div><div class="big">${ok}<small> / ${N}</small></div><div class="word">${WORD}</div>
+    <div class="tiles${N>5?" many":""}" aria-hidden="true">${mode.ids.map(id=>mode.picks[id]===BYID[id].answer?`<span class="tile">✓</span>`:`<span class="tile no">✕</span>`).join("")}</div></div>
+   <div class="list">${mode.ids.map(id=>{const i=BYID[id],p=mode.picks[id],r=p===i.answer,r2=i.round==="R2";return `<div class="hrow">
+     <div class="mark${r?"":" no"}" aria-label="${r?"Right":"Wrong"}">${r?"✓":"✕"}</div>
+     <div><div class="meta"><span class="seat">${esc(i.seatName)}</span><span class="pill ${r2?"r2":"r1"}">${i.round==="Play"?"Play":r2?"Round 2":"Round 1"}</span><span class="pill score">${scorePill(i)}</span></div>
+      <div class="mini">${i.hand.map(c=>card(c,false,(i.played||[]).includes(c))).join("")}<span class="upc-mini">${card(i.upcard).replace('class="c','class="c up'+(i.down?" down":""))}</span></div>
+      <div class="pickans"><b>${esc(i.answer)}</b>${r?"":` <span class="you">· you: <s>${esc(p)}</s></span>`}</div></div></div>`}).join("")}</div>
+   <div class="foot"><div class="row"><button class="next" id="share">Share</button>${mode.kind==="express"?`<button class="next" id="again">Another 20</button>`:""}<button class="next" id="back" style="background:var(--card);color:var(--felt)">Back to practice</button></div><div id="shareOut"></div>
+   ${mode.kind==="daily"?`<p class="mhead">Same five hands for everyone today. New hands tomorrow.</p>`:""}</div></div>`;
   document.getElementById("share").onclick=()=>share(text);
   const a=document.getElementById("again");if(a)a.onclick=()=>setMode("express");
   document.getElementById("back").onclick=()=>setMode("practice");
