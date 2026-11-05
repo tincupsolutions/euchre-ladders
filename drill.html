@@ -206,8 +206,13 @@ function pick(){
 }
 const SAID={S1:"You speak first.",S2:"Seat 1 passed.",S3:"Seats 1 and 2 passed.",S4:"Everyone passed to you."};
 const SAID2={S1:"Everyone passed in round 1. You speak first.",S2:"Everyone passed in round 1, and seat 1 passed again.",S3:"Everyone passed in round 1; seats 1 and 2 passed again.",S4:"Everyone passed twice. You're stuck: you must name a suit."};
-function scoreTxt(i){return i.score?`You ${i.score[0]} · Them ${i.score[1]}`:"Ordinary score"}
-function scorePill(i){if(!i.score)return "Ordinary score";const f=v=>String(v)==="9"?`<span class="hot">9</span>`:esc(v);return `You ${f(i.score[0])} · Them ${f(i.score[1])}`}
+// A hand with no score in its rule is played at an ordinary score; show a real one (Michele, 2026-11-05).
+// Picked per family so variants of one hand keep the same score.
+const ORD=[[0,0],[2,1],[1,2],[3,3],[4,2],[2,4],[1,0],[3,1]];
+function ordScore(i){const k=String(i.fam!=null?"f"+i.fam:i.id);let h=0;for(const ch of k)h=(h*31+ch.charCodeAt(0))>>>0;return ORD[h%ORD.length]}
+function shownScore(i){return i.score||ordScore(i)}
+function scoreTxt(i){const s=shownScore(i);return `You ${s[0]} · Them ${s[1]}`}
+function scorePill(i){const sc=shownScore(i);const f=v=>String(v)==="9"?`<span class="hot">9</span>`:esc(v);return `You ${f(sc[0])} · Them ${f(sc[1])}`}
 // You at the bottom, then clockwise: left, top (partner), right. Seats count from the dealer; the dealer is D.
 function seatMap(seat){const n={S1:1,S2:2,S3:3,S4:4}[seat];if(!n)return "";const pos=["s","w","n","e"];
   return `<div class="seats" role="img" aria-label="You are ${n===4?"the dealer":"seat "+n}">${pos.map((p,k)=>{const m=((n-1+k)%4)+1;return `<div class="st ${p}${k===0?" you":k===2?" partner":""}">${m===4?"D":m}${k===0?'<div class="youlab">You</div>':""}</div>`}).join("")}</div>`}
@@ -218,7 +223,7 @@ function famOf(i){return i.fam==null?[]:ITEMS.filter(x=>x.fam===i.fam).sort((a,b
 function remaining(){return !mode&&chain&&cur&&incVar()?famOf(cur).filter(m=>!(m.id in chain.done)):[]}
 function banner(from,to){
   if(sameCards(from,to)){
-    if(!sameScore(from,to))return `<b>Same hand</b>, now at ${esc(to.score?`You ${to.score[0]} · Them ${to.score[1]}`:"an ordinary score")}. Does the call change?`;
+    if(!sameScore(from,to))return `<b>Same hand</b>, now at ${esc(scoreTxt(to))}. Does the call change?`;
     return `<b>Same hand and score.</b> What's different: ${esc(to.vlabel.split(", ").slice(1).join(", ")||"the situation")}. Does the call change?`;
   }
   const was=from.vlabel+(sameScore(from,to)?"":` (${scoreTxt(from)})`),now=to.vlabel+(sameScore(from,to)?"":` (${scoreTxt(to)})`);
