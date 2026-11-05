@@ -51,7 +51,7 @@ async function start() {
       <div class="cm-tabs"><button data-t="in" aria-pressed="${tab === "in"}">Sign in</button>${join ? `<button data-t="join" aria-pressed="${tab === "join"}">Create account</button>` : ""}</div>
       ${tab === "join" ? `
         <label>Username<input id="cmUser" autocomplete="username" maxlength="24"></label>
-        <p class="cm-hint">Use your Discord name, so people know who you are.</p>
+        <p class="cm-hint">Any name you like, such as your Euchre 3D name.</p>
         <label>Email<input id="cmEmail" type="email" autocomplete="email"></label>
         <label>Password<input id="cmPass" type="password" autocomplete="new-password" minlength="6"></label>
         <label>Highest Euchre 3D rating (optional)<input id="cmRating" inputmode="numeric" maxlength="4"></label>
@@ -59,7 +59,7 @@ async function start() {
         <button class="next" id="cmGo">Create account</button>` : tab === "setup" ? `
         <p>One more step: choose a username.</p>
         <label>Username<input id="cmUser" maxlength="24"></label>
-        <p class="cm-hint">Use your Discord name, so people know who you are.</p>
+        <p class="cm-hint">Any name you like, such as your Euchre 3D name.</p>
         <label>Highest Euchre 3D rating (optional)<input id="cmRating" inputmode="numeric" maxlength="4"></label>
         <button class="next" id="cmGo">Save</button>` : `
         <label>Email<input id="cmEmail" type="email" autocomplete="email"></label>
