@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Euchre Drill</title>
+<meta property="og:title" content="Euchre Drill">
+<meta property="og:description" content="Real hands from the r/Euchre Discord, answered by seaeagle's sims and the channel's experts. How would you call them?">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* scorecard on a card table: cool paper, dark ink, felt-green accent, suit red; ladders read top (call) to bottom (pass) */
+  --paper:#f2f3ef; --card:#ffffff; --ink:#18201d; --muted:#5a6560; --line:#d9ddd6;
+  --felt:#1f6b4a; --suitred:#b8322a;
+  --t-call:#2e7a4c; --t-callu:#6b8f2c; --t-toss:#b2861a; --t-passu:#b3633a; --t-pass:#9b3a33;
+  --chip:#ffffff; --chipline:#c9cec6; --soft:#e8ebe5;
+  --display:"Barlow Semi Condensed","Arial Narrow",system-ui,sans-serif;
+  --body:"Atkinson Hyperlegible",system-ui,-apple-system,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#121715; --card:#1a201d; --ink:#e6ebe7; --muted:#9aa59f; --line:#2c3531;
+  --felt:#5fbf8c; --suitred:#ef7d73;
+  --t-call:#5fbf8c; --t-callu:#a3c262; --t-toss:#e2b84f; --t-passu:#e39368; --t-pass:#e07a72;
+  --chip:#232a27; --chipline:#3a4440; --soft:#222a26; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --paper:#121715; --card:#1a201d; --ink:#e6ebe7; --muted:#9aa59f; --line:#2c3531;
+  --felt:#5fbf8c; --suitred:#ef7d73;
+  --t-call:#5fbf8c; --t-callu:#a3c262; --t-toss:#e2b84f; --t-passu:#e39368; --t-pass:#e07a72;
+  --chip:#232a27; --chipline:#3a4440; --soft:#222a26; color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55}
+a{color:var(--felt)}
+:focus-visible{outline:2px solid var(--felt);outline-offset:2px}
+
+.wrap{max-width:560px;margin:0 auto;padding:40px 16px 80px;text-align:center}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px 20px;margin:20px 0 0}
+.who{font-size:16px;color:var(--muted)}
+.big{font-family:var(--display);font-weight:600;font-size:52px;line-height:1.1;margin:6px 0 0}
+.grid{font-size:30px;letter-spacing:3px;margin:8px 0 0}
+.what{font-size:17px;margin:8px 0 0}
+.go{display:inline-block;margin:22px 0 0;font-family:var(--display);font-weight:600;font-size:18px;padding:10px 22px;border-radius:999px;background:var(--felt);color:var(--card);text-decoration:none}
+.foot{font-size:13px;color:var(--muted);margin:24px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Euchre Drill</h1>
+<div class="card" id="card"></div>
+<a class="go" href="drill.html">Try the drill</a>
+<p class="foot">Real hands from the r/Euchre Discord. Answers come from seaeagle's simulations, or from experts who agreed.</p>
+</div>
+<script>
+const q=new URLSearchParams(location.search),esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const u=q.get("u"),k=q.get("k"),who=u?`<div class="who">${esc(u)}</div>`:"";
+let h="";
+if(k==="skill")h=`${who}<div class="big">★</div><div class="what">Mastered <b>${esc(q.get("sk"))}</b></div>`;
+else if(k==="daily")h=`${who}<div class="what">Daily 5, ${esc(q.get("d"))}</div><div class="grid">${esc(q.get("g"))}</div><div class="big">${esc(q.get("s"))} of 5</div>`;
+else if(k==="express")h=`${who}<div class="big">${esc(q.get("s"))} of ${esc(q.get("n")||20)}</div><div class="what">on the Express 20. Can you beat it?</div>`;
+else h=`<div class="what">Real hands. Make your call, then see what the sim says.</div>`;
+document.getElementById("card").innerHTML=h;
+</script>
+</body>
+</html>
