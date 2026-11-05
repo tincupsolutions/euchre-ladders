@@ -54,6 +54,7 @@ async function start() {
         <p class="cm-hint">Any name you like, such as your Euchre 3D name.</p>
         <label>Email<input id="cmEmail" type="email" autocomplete="email"></label>
         <label>Password<input id="cmPass" type="password" autocomplete="new-password" minlength="6"></label>
+        <label class="cm-show"><input type="checkbox" id="cmShow"> Show password</label>
         <label>Highest Euchre 3D rating (optional)<input id="cmRating" inputmode="numeric" maxlength="4"></label>
         <p class="cm-hint">Used to compare how players at different levels answer.</p>
         <button class="next" id="cmGo">Create account</button>` : tab === "setup" ? `
@@ -64,6 +65,7 @@ async function start() {
         <button class="next" id="cmGo">Save</button>` : `
         <label>Email<input id="cmEmail" type="email" autocomplete="email"></label>
         <label>Password<input id="cmPass" type="password" autocomplete="current-password"></label>
+        <label class="cm-show"><input type="checkbox" id="cmShow"> Show password</label>
         <button class="next" id="cmGo">Sign in</button>
         <p><a href="#" id="cmForgot">Forgot your password?</a></p>
         ${join ? "" : `<p class="cm-hint">New here? You need an invite link to create an account.</p>`}`}
@@ -75,6 +77,8 @@ async function start() {
     const go = $("cmGo");
     go.onclick = () => (tab === "join" ? doJoin() : tab === "setup" ? doSetup() : doIn());
     d.querySelectorAll("input").forEach((i) => i.addEventListener("keydown", (e) => { if (e.key === "Enter") go.click(); }));
+    const sh = $("cmShow");
+    if (sh) sh.onchange = () => { $("cmPass").type = sh.checked ? "text" : "password"; };
     const f = $("cmForgot");
     if (f) f.onclick = async (e) => {
       e.preventDefault();
