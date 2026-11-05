@@ -87,7 +87,21 @@ a{color:var(--felt)}
 .vset tr.now td{background:color-mix(in srgb,var(--t-toss) 16%,transparent)}
 .vset .q2{color:var(--muted);font-weight:400}
 .vset .mk{font-weight:400;color:var(--muted);margin-left:4px}
-.qhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.qhead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.qhead .flag{margin:10px 0 0}
+.pills{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 0}
+.pill{font-family:var(--display);font-weight:600;font-size:15px;padding:2px 11px;border-radius:999px;border:1.5px solid currentColor;white-space:nowrap}
+.pill.r1{color:var(--felt)}
+.pill.r2{color:var(--card);background:#7a4fb0;border-color:#7a4fb0}
+.pill.score{color:var(--ink);border-color:var(--line);background:var(--soft)}
+.pill .hot{color:var(--t-pass)}
+.seats{position:relative;width:88px;height:88px;flex:none;margin:0 0 16px}
+.st{position:absolute;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:600;font-size:15px;background:var(--card);border:1.5px solid var(--chipline);color:var(--muted)}
+.st.you{background:var(--felt);border-color:var(--felt);color:var(--card)}
+.st.partner{border-color:var(--felt);color:var(--felt)}
+.st.n{left:29px;top:0} .st.s{left:29px;bottom:0} .st.w{left:0;top:29px} .st.e{right:0;top:29px}
+.youlab{position:absolute;left:-10px;right:-10px;bottom:-16px;text-align:center;font-family:var(--body);font-size:11px;font-weight:700;color:var(--felt)}
+@media (prefers-color-scheme:dark){.pill.r2{background:#9a74d0;border-color:#9a74d0}}
 .flag{font:inherit;font-size:14px;cursor:pointer;border:1px solid var(--line);background:var(--card);color:var(--muted);border-radius:999px;padding:4px 12px;white-space:nowrap}
 .flag[aria-pressed="true"]{background:var(--t-pass);border-color:var(--t-pass);color:var(--card)}
 .note{display:block;width:100%;box-sizing:border-box;margin:10px 0 0;font:inherit;font-size:14.5px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--card);color:var(--ink);resize:vertical;min-height:52px}
@@ -192,6 +206,10 @@ function pick(){
 const SAID={S1:"You speak first.",S2:"Seat 1 passed.",S3:"Seats 1 and 2 passed.",S4:"Everyone passed to you."};
 const SAID2={S1:"Everyone passed in round 1. You speak first.",S2:"Everyone passed in round 1, and seat 1 passed again.",S3:"Everyone passed in round 1; seats 1 and 2 passed again.",S4:"Everyone passed twice. You're stuck: you must name a suit."};
 function scoreTxt(i){return i.score?`You ${i.score[0]} · Them ${i.score[1]}`:"Ordinary score"}
+function scorePill(i){if(!i.score)return "Ordinary score";const f=v=>String(v)==="9"?`<span class="hot">9</span>`:esc(v);return `You ${f(i.score[0])} · Them ${f(i.score[1])}`}
+// You at the bottom, then clockwise: left, top (partner), right. Seats count from the dealer; the dealer is D.
+function seatMap(seat){const n={S1:1,S2:2,S3:3,S4:4}[seat];if(!n)return "";const pos=["s","w","n","e"];
+  return `<div class="seats" role="img" aria-label="You are ${n===4?"the dealer":"seat "+n}">${pos.map((p,k)=>{const m=((n-1+k)%4)+1;return `<div class="st ${p}${k===0?" you":k===2?" partner":""}">${m===4?"D":m}${k===0?'<div class="youlab">You</div>':""}</div>`}).join("")}</div>`}
 function sameScore(a,b){return JSON.stringify(a.score)===JSON.stringify(b.score)}
 function sameCards(a,b){return a.hand.every(c=>b.hand.includes(c))&&a.upcard===b.upcard}
 function incVar(){return document.getElementById("incVar").checked}
@@ -214,8 +232,11 @@ function render(){
   const prompt=i.prompt||(r2?SAID2[i.seat]:SAID[i.seat])+" What do you do?";
   const swap=vf&&vf.upcard===i.upcard&&i.hand.filter(x=>!vf.hand.includes(x)).length<=2;
   el.innerHTML=`<div class="q">
-   <div class="qhead"><div class="where">${esc(i.seatName)} · ${r2?"Round 2":"Round 1"}</div><button class="flag" id="flag" aria-pressed="${!!flags[i.id]}" title="Flag a hand that looks wrong or that you have a question about (F)">${flags[i.id]?"⚑ Flagged":"⚑ Flag"}</button></div>
-   <div class="facts"><span><b class="${vf&&!sameScore(vf,i)?"chgtxt":""}">${scoreTxt(i)}</b></span></div>
+   <div class="qhead"><div>
+    <div class="where">${esc(i.seatName)}</div>
+    <div class="pills"><span class="pill ${r2?"r2":"r1"}">${i.round==="Play"?"Play":r2?"Round 2":"Round 1"}</span><span class="pill score${vf&&!sameScore(vf,i)?" chgtxt":""}">${scorePill(i)}</span></div>
+    <button class="flag" id="flag" aria-pressed="${!!flags[i.id]}" title="Flag a hand that looks wrong or that you have a question about (F)">${flags[i.id]?"⚑ Flagged":"⚑ Flag"}</button>
+   </div>${seatMap(i.seat)}</div>
    ${vf?`<div class="vbanner">${banner(vf,i)}</div>`:""}
    <div class="table"><div><div class="lab">Your hand</div><div class="hand">${i.hand.map(c=>card(c,swap&&!vf.hand.includes(c))).join("")}</div></div>
    <div class="upc${i.down?" down":""}"><div class="lab">${i.down?"Turned down":"Turned up"}</div>${card(i.upcard)}</div></div>
