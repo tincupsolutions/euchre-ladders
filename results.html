@@ -51,6 +51,7 @@ button{font-family:var(--display);font-weight:600;font-size:15px;cursor:pointer;
 .msg{color:var(--t-pass);font-size:14px}
 .flag{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0 0;font-size:14px}
 .flag i{color:var(--muted)}
+button.role{font-size:12px;padding:0 8px;margin:0 0 0 8px;background:var(--card);color:var(--felt)}
 #copyOut textarea{width:100%;min-height:160px;font:12.5px/1.4 ui-monospace,Menlo,monospace}
 </style>
 </head>
@@ -104,11 +105,16 @@ async function show(){
    <table><tr><th>Band</th><th>Players</th><th>First answers</th><th>Agreed with drill</th></tr>${bandRows.map(r=>`<tr><td>${r.b}</td><td class="n">${r.n}</td><td class="n">${r.f}</td><td class="n">${pct(r.a,r.f)}</td></tr>`).join("")}</table>
    <h2>Players</h2>
    <table><tr><th>Player</th><th>Rating</th><th>Hands tried</th><th>Agreed (first try)</th><th>Answers</th><th>Express best</th><th>Daily 5s</th><th>Skills mastered</th><th>Flags</th></tr>
-   ${players.map(p=>`<tr><td>${esc(p.u.username)}${p.u.role==="expert"?'<span class="tag">expert</span>':""}</td><td class="n">${p.u.rating??""}</td><td class="n">${p.first} / ${ITEMS.length}</td><td class="n">${pct(p.agree,p.first)}</td><td class="n">${p.total}</td><td class="n">${p.exBest??""}</td><td class="n">${p.daily||""}</td><td class="n">${p.mastered} / ${SKILLS.length}</td><td class="n">${p.flags||""}</td></tr>`).join("")}</table>
+   ${players.map(p=>`<tr><td>${esc(p.u.username)}${p.u.role==="expert"?'<span class="tag">expert</span>':""}<button class="role" data-uid="${esc(p.u.id)}" data-to="${p.u.role==="expert"?"player":"expert"}">${p.u.role==="expert"?"Not an expert":"Make expert"}</button></td><td class="n">${p.u.rating??""}</td><td class="n">${p.first} / ${ITEMS.length}</td><td class="n">${pct(p.agree,p.first)}</td><td class="n">${p.total}</td><td class="n">${p.exBest??""}</td><td class="n">${p.daily||""}</td><td class="n">${p.mastered} / ${SKILLS.length}</td><td class="n">${p.flags||""}</td></tr>`).join("")}</table>
    <h2>Hands</h2><p class="note">Sorted with the hands experts agree with least at the top. A hand experts keep disagreeing with is the first to recheck.</p>
    <table><tr><th>Hand</th><th>Drill answer</th><th>Source</th><th>Tried</th><th>Agreed</th><th>Experts agreed</th>${BANDS.map(b=>`<th>${b[0]}</th>`).join("")}<th>Flags</th></tr>
    ${qrows.map(r=>`<tr><td>${esc(qtxt(r.i))}<br><span class="note">${esc(r.i.rule)}</span></td><td>${esc(r.i.answer)}</td><td>${esc(r.i.source==="Rule"?"Built from rule":r.i.source)}</td><td class="n">${r.n}</td><td class="n${r.n&&r.ok/r.n<.5?" lo":""}">${pct(r.ok,r.n)}</td><td class="n${r.en&&r.eok/r.en<.5?" lo":""}">${r.en?`${r.eok}/${r.en}`:"–"}</td>${BANDS.map(b=>{const[x,y]=r.byBand[b[0]];return `<td class="n">${y?`${x}/${y}`:"–"}</td>`}).join("")}<td class="n">${r.fl||""}</td></tr>`).join("")}</table>`;
   $("out").onclick=()=>A.signOut(auth);
+  // Michele, 2026-11-06: someone can sign up with the expert link who isn't one. Only the admin
+  // can change a role (firestore.rules); their answers then count as a player's everywhere.
+  document.querySelectorAll("button.role").forEach(b=>b.onclick=async()=>{b.disabled=true;
+    try{await F.updateDoc(F.doc(db,"users",b.dataset.uid),{role:b.dataset.to});await show()}
+    catch(e){b.disabled=false;b.textContent=e.code==="permission-denied"?"Rules not published yet":"Failed: "+e.code}});
   $("copy").onclick=async()=>{const t=["Euchre drill flags ("+fl.length+")",""].concat(fl.map((f,n)=>`${n+1}. [${f.qid}] ${FT[f.type]} · ${f.u.username||f.username}${f.u.role==="expert"?" (expert)":""}${f.u.rating?" "+f.u.rating:""}\n   ${qtxt(f.i)} · prompt: ${f.i.prompt||"(bidding)"}\n   Drill: ${f.i.answer} (${f.i.source}) · they picked: ${f.picked||"-"}\n   Rule: ${f.i.rule}\n   Comment: ${f.note||"(none)"}\n`)).join("\n");
     try{await navigator.clipboard.writeText(t);$("copyOut").innerHTML='<p class="note">Copied. Paste it into a chat with Claude.</p>'}catch(e){$("copyOut").innerHTML='<textarea readonly></textarea>';$("copyOut").firstChild.value=t;$("copyOut").firstChild.select()}};
 }
