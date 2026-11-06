@@ -51,6 +51,9 @@ button{font-family:var(--display);font-weight:600;font-size:15px;cursor:pointer;
 .msg{color:var(--t-pass);font-size:14px}
 .flag{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0 0;font-size:14px}
 .flag i{color:var(--muted)}
+a.flag{display:block;color:inherit;text-decoration:none;cursor:pointer}
+a.flag:hover{border-color:var(--felt);box-shadow:0 1px 6px rgba(0,0,0,.08)}
+.flag .open{color:var(--felt);font-weight:700;white-space:nowrap}
 button.role{font-size:12px;padding:0 8px;margin:0 0 0 8px;background:var(--card);color:var(--felt)}
 #copyOut textarea{width:100%;min-height:160px;font:12.5px/1.4 ui-monospace,Menlo,monospace}
 </style>
@@ -99,7 +102,7 @@ async function show(){
   $("app").innerHTML=`
    <p class="note">${users.length} players · ${answers.length} answers · ${flags.length} flags · ${results.length} Express/Daily rounds. Agreement uses each player's <b>first</b> answer to a hand, so practice repeats don't inflate it. <button id="out" style="margin:0 0 0 8px;padding:2px 10px;font-size:13px">Sign out</button></p>
    <h2>Flags</h2><p class="note">Grouped by type. Comments are the player's own words.</p>
-   ${["disagree","question","unclear"].map(t=>{const L=fl.filter(f=>f.type===t);return `<h3>${FT[t]} (${L.length})</h3>${L.map(f=>`<div class="flag"><b>${esc(f.u.username||f.username)}</b>${f.u.role==="expert"?'<span class="tag">expert</span>':""}${f.u.rating?`<span class="tag">${f.u.rating}</span>`:""} · ${esc(qtxt(f.i))} · drill says <b>${esc(f.i.answer)}</b>${f.picked?`, they picked ${esc(f.picked)}`:""}<br>${f.note?`<i>${esc(f.note)}</i>`:'<i>(no comment)</i>'} <span class="tag">${esc(f.qid)}</span></div>`).join("")||'<p class="note">None.</p>'}`}).join("")}
+   ${["disagree","question","unclear"].map(t=>{const L=fl.filter(f=>f.type===t);return `<h3>${FT[t]} (${L.length})</h3>${L.map(f=>`<a class="flag" href="drill.html#q=${esc(f.qid)}" target="drillq" title="Open this hand in the drill"><b>${esc(f.u.username||f.username)}</b>${f.u.role==="expert"?'<span class="tag">expert</span>':""}${f.u.rating?`<span class="tag">${f.u.rating}</span>`:""} · ${esc(qtxt(f.i))} · drill says <b>${esc(f.i.answer)}</b>${f.picked?`, they picked ${esc(f.picked)}`:""}<br>${f.note?`<i>${esc(f.note)}</i>`:'<i>(no comment)</i>'} <span class="tag">${esc(f.qid)}</span> <span class="open">Open hand →</span></a>`).join("")||'<p class="note">None.</p>'}`}).join("")}
    <button id="copy">Copy all flags for Claude</button><div id="copyOut"></div>
    <h2>By rating</h2><p class="note">Self-reported highest Euchre 3D rating. Small groups: read counts before percentages.</p>
    <table><tr><th>Band</th><th>Players</th><th>First answers</th><th>Agreed with drill</th></tr>${bandRows.map(r=>`<tr><td>${r.b}</td><td class="n">${r.n}</td><td class="n">${r.f}</td><td class="n">${pct(r.a,r.f)}</td></tr>`).join("")}</table>

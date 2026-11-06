@@ -456,6 +456,11 @@ window.drill={ITEMS,SKILLS,
   get flags(){return flags},set flags(v){flags=v;saveFlags();review();if(cur){flagBtn();fpanel(false)}skills()},
   mastered:()=>[...masteredSet()],learnedCount:()=>ITEMS.filter(learned).length,setMode};
 skills();setMode("practice");review();
+// Open one hand from a link (#q=<id>), e.g. a flag on the results page (Michele, 2026-11-06).
+function openFromHash(){const m=location.hash.match(/^#q=([0-9a-f]{8})$/);if(!m||!BYID[m[1]])return;
+  if(mode)setMode("practice");chain=null;variantOf=null;cur=BYID[m[1]];render();progress();
+  document.getElementById("q").scrollIntoView({block:"start"})}
+openFromHash();window.addEventListener("hashchange",openFromHash);
 </script>
 <script type="module" src="cloud.js"></script>
 </body>
