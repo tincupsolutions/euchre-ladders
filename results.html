@@ -42,7 +42,7 @@ h2{font-family:var(--display);font-weight:600;font-size:22px;margin:28px 0 6px}
 table{border-collapse:collapse;width:100%;font-size:13.5px;background:var(--card)}
 th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
 th{font-family:var(--display);font-weight:600;font-size:14px;cursor:pointer;white-space:nowrap}
-td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+th.n,td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
 .lo{color:var(--t-pass);font-weight:700}
 .tag{font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:0 6px;margin-left:4px;color:var(--muted)}
 .login{max-width:340px}
@@ -109,6 +109,8 @@ async function show(){
    <h2>Hands</h2><p class="note">Sorted with the hands experts agree with least at the top. A hand experts keep disagreeing with is the first to recheck.</p>
    <table><tr><th>Hand</th><th>Drill answer</th><th>Source</th><th>Tried</th><th>Agreed</th><th>Experts agreed</th>${BANDS.map(b=>`<th>${b[0]}</th>`).join("")}<th>Flags</th></tr>
    ${qrows.map(r=>`<tr><td>${esc(qtxt(r.i))}<br><span class="note">${esc(r.i.rule)}</span></td><td>${esc(r.i.answer)}</td><td>${esc(r.i.source==="Rule"?"Built from rule":r.i.source)}</td><td class="n">${r.n}</td><td class="n${r.n&&r.ok/r.n<.5?" lo":""}">${pct(r.ok,r.n)}</td><td class="n${r.en&&r.eok/r.en<.5?" lo":""}">${r.en?`${r.eok}/${r.en}`:"–"}</td>${BANDS.map(b=>{const[x,y]=r.byBand[b[0]];return `<td class="n">${y?`${x}/${y}`:"–"}</td>`}).join("")}<td class="n">${r.fl||""}</td></tr>`).join("")}</table>`;
+  // Number columns: the header sits over the numbers (Michele, 2026-11-06).
+  document.querySelectorAll("#app table").forEach(t=>{const r=t.rows[1];if(r)[...t.rows[0].cells].forEach((h,k)=>{if(r.cells[k]?.classList.contains("n"))h.classList.add("n")})});
   $("out").onclick=()=>A.signOut(auth);
   // Michele, 2026-11-06: someone can sign up with the expert link who isn't one. Only the admin
   // can change a role (firestore.rules); their answers then count as a player's everywhere.
