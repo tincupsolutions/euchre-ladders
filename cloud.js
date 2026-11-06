@@ -6,7 +6,14 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const JOIN_KEY = "euchreDrill.join";
 
-if (CONFIG && CONFIG.apiKey && window.drill) start().catch((e) => console.warn("cloud off:", e));
+// The drill requires an account (Michele, 2026-11-05: "I want to require a sign in so I can
+// track data"). body.locked hides it until a signed-in user with a profile is loaded.
+function gateDown(msg) {
+  const m = $("gateMsg"); if (m) m.textContent = msg;
+  const b = $("gateBtns"); if (b) b.innerHTML = `<button class="next" onclick="location.reload()">Try again</button>`;
+}
+if (CONFIG && CONFIG.apiKey && window.drill) start().catch((e) => { console.warn("cloud off:", e); gateDown("Couldn't reach the sign-in service. Check your connection and try again."); });
+else gateDown("Sign-in isn't available right now.");
 
 async function start() {
   const [{ initializeApp }, A, F] = await Promise.all([
@@ -28,7 +35,19 @@ async function start() {
   let me = null, saveT = null;
   const flagT = {};
 
+  function gate() {
+    document.body.classList.toggle("locked", !me);
+    if (me) return;
+    $("gateMsg").textContent = join
+      ? "Your invite is ready. Create your account (or sign in if you already have one) to start."
+      : "The drill is for invited players, so every answer can be counted. Sign in, or open your invite link to create an account.";
+    $("gateBtns").innerHTML = (join ? `<button class="next" id="gJoin">Create account</button>` : "") +
+      `<button class="next" id="gIn"${join ? ' style="background:var(--card);color:var(--felt)"' : ""}>Sign in</button>`;
+    if (join) $("gJoin").onclick = () => modal("join");
+    $("gIn").onclick = () => modal("in");
+  }
   function acct() {
+    gate();
     const el = $("acct");
     if (!el) return;
     if (me) {
