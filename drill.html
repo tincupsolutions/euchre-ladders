@@ -80,6 +80,27 @@ a{color:var(--felt)}
 #vmodal .cm-back{position:fixed;inset:0;background:rgba(0,0,0,.35)}
 #vmodal .vbox{position:relative;background:var(--card);border-radius:14px;padding:20px;max-width:640px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.25)}
 .iqb{display:inline-flex;align-items:center;justify-content:center;width:1.3em;height:1.3em;box-sizing:border-box;border-radius:50%;background:#063b1c;border:1.5px solid #ffd34d;color:#ffd34d;font-size:.85em;line-height:1;vertical-align:-.25em;margin-right:.3em;font-style:normal}
+.srows{margin:10px 0 0}
+.srow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 10px;border:1.5px solid var(--line);border-radius:12px;margin:6px 0 0;background:var(--card)}
+.srow .pill.score{min-width:128px;text-align:center}
+.srow .sopts{display:flex;gap:6px;flex-wrap:wrap}
+.srow .opt{padding:5px 14px;font-size:15px}
+.srow .opt.on{background:var(--ink);border-color:var(--ink);color:var(--card)}
+.srow.ok{border-color:var(--t-call)}.srow.no{border-color:var(--t-pass)}
+.srow .swhy{flex-basis:100%;font-size:13.5px;color:var(--muted)}
+.next:disabled{opacity:.45;cursor:default}
+.lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin:12px 0 0}
+.lt{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--card);cursor:pointer;user-select:none}
+.lt:focus-visible{outline:2px solid var(--felt);outline-offset:2px}
+.lt.on{border-color:var(--felt);background:color-mix(in srgb,var(--felt) 9%,var(--card));box-shadow:inset 0 0 0 1px var(--felt)}
+.lt.ok{border-color:var(--t-call);cursor:default}.lt.no{border-color:var(--t-pass);cursor:default}
+.lt-h{font-size:14.5px}.lt-s{font-size:12.5px;color:var(--muted);margin:1px 0 6px}
+.hand.sm{gap:4px}.hand.sm .c{width:34px;height:48px;font-size:14px;border-radius:5px}.hand.sm .c span{font-size:15px}
+.lt-u{font-size:13px;color:var(--muted);margin:6px 0 0}
+.lt-tag{font-family:var(--display);font-weight:600;font-size:14px;margin:8px 0 0;color:var(--muted)}
+.lt.on .lt-tag{color:var(--felt)}
+.lt-a{font-size:13.5px;margin:8px 0 0;line-height:1.4}.lt.ok .lt-a b{color:var(--t-call)}.lt.no .lt-a b{color:var(--t-pass)}
+.lhero{font-family:var(--display);font-weight:600;font-size:20px;margin:6px 0 0}.lhero .big{font-size:34px}.lhero small{font-size:18px;color:var(--muted)}
 .next.skip{background:var(--card);color:var(--felt);margin-left:8px}
 .foot{margin:24px 0 0;font-size:12.5px;color:var(--muted)}
 body.locked #drillMain,body.locked #reset{display:none}
@@ -109,6 +130,8 @@ body:not(.locked) #gate{display:none}
 .pill.r2{color:var(--card);background:var(--felt);border-color:var(--felt)}
 .pill.score{color:var(--ink);border-color:var(--line);background:var(--soft)}
 .pill .hot{color:var(--t-pass)}
+.pill.score.hot8{background:#ffd34d;border-color:#e0a01e}
+.pscore{white-space:nowrap}.pscore.hot8{background:#ffd34d;border-radius:6px;padding:0 5px}
 .seats{position:relative;width:88px;height:88px;flex:none;margin:0 0 16px}
 .st{position:absolute;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:600;font-size:15px;background:var(--card);border:1.5px solid var(--chipline);color:var(--muted)}
 .st.you{background:var(--felt);border-color:var(--felt);color:var(--card)}
@@ -209,7 +232,7 @@ body:not(.locked) #gate{display:none}
 <p id="gateMsg">The drill is for invited players, so every answer can be counted. Checking whether you're signed in…</p>
 <div class="gate-btns" id="gateBtns"></div></div>
 <div id="drillMain">
-<div class="modes" id="modes"><button data-m="practice">Practice</button><button data-m="express">Express 20</button><button data-m="daily">Daily 5</button></div>
+<div class="modes" id="modes"><button data-m="practice">Practice</button><button data-m="express">Express 20</button><button data-m="daily">Daily 5</button><button data-m="loner">Spot the loner</button><button data-m="score">Score matters</button></div>
 <div id="practiceCtl">
 <label class="ctl"><input type="checkbox" id="incVar"> Include variants: play a hand's variants back to back (the same type of hand with one thing changed, or the same hand at another score)</label>
 <div class="skills" id="skills"></div>
@@ -258,6 +281,7 @@ const SAID2={S1:"Everyone passed in round 1. You speak first.",S2:"Everyone pass
 // Picked per family so variants of one hand keep the same score.
 const ORD=[[0,0],[2,1],[1,2],[3,3],[4,2],[2,4],[1,0],[3,1]];
 function ordScore(i){const k=String(i.fam!=null?"f"+i.fam:i.id);let h=0;for(const ch of k)h=(h*31+ch.charCodeAt(0))>>>0;return ORD[h%ORD.length]}
+function hotScore(i){return shownScore(i).some(v=>+v>=8||/^[7-9] or [89]$/.test(String(v)))}
 function shownScore(i){return i.score||ordScore(i)}
 function scoreTxt(i){const s=shownScore(i);return `You ${s[0]} · Them ${s[1]}`}
 function scorePill(i){const sc=shownScore(i);const f=v=>String(v)==="9"?`<span class="hot">9</span>`:esc(v);return `You ${f(sc[0])} · Them ${f(sc[1])}`}
@@ -290,13 +314,13 @@ function render(){
   el.innerHTML=`<div class="q">
    <div class="qhead"><div>
     <div class="where">${esc(i.seatName)}</div>
-    <div class="pills"><span class="pill ${r2?"r2":"r1"}">${i.round==="Play"?"Play":r2?"Round 2":"Round 1"}</span><span class="pill score${vf&&!sameScore(vf,i)?" chgtxt":""}">${scorePill(i)}</span></div>
+    <div class="pills"><span class="pill ${r2?"r2":"r1"}">${i.round==="Play"?"Play":r2?"Round 2":"Round 1"}</span><span class="pill score${vf&&!sameScore(vf,i)?" chgtxt":""}${hotScore(i)?" hot8":""}">${scorePill(i)}</span></div>
     <button class="flag" id="flag" aria-pressed="${!!flags[i.id]}" title="Flag a hand that looks wrong or that you have a question about (F)">${flags[i.id]?"⚑ Flagged":"⚑ Flag"}</button>
    </div>${seatMap(i.seat)}</div>
    ${vf?`<div class="vbanner">${banner(vf,i)}${swap&&i.hand.some(x=>!vf.hand.includes(x))?" The card that changed is outlined in gold.":""}</div>`:""}
    <div class="table"><div><div class="lab">Your hand</div><div class="hand">${i.hand.map(c=>card(c,swap&&!vf.hand.includes(c),(i.played||[]).includes(c))).join("")}</div></div>
    <div class="upc${i.down?" down":""}"><div class="lab">${i.down?"Turned down":"Turned up"}</div>${card(i.upcard)}</div></div>
-   <p class="prompt">${esc(prompt)}</p>
+   <p class="prompt"><b class="pscore${hotScore(i)?" hot8":""}">${scorePill(i)}.</b> ${esc(prompt)}</p>
    <div class="opts">${i.options.map((o,k)=>`<button class="opt" data-k="${k}"><kbd>${k+1}</kbd>${esc(o)}</button>`).join("")}</div>
    <div id="fpanel"></div>
    <div id="ans"></div></div>`;
@@ -322,7 +346,7 @@ function viewHand(id){
     <div class="pills"><span class="pill ${r2?"r2":"r1"}">${i.round==="Play"?"Play":r2?"Round 2":"Round 1"}</span><span class="pill score">${scorePill(i)}</span></div></div>${seatMap(i.seat)}</div>
    <div class="table"><div><div class="lab">Your hand</div><div class="hand">${i.hand.map(c=>card(c,false,(i.played||[]).includes(c))).join("")}</div></div>
    <div class="upc${i.down?" down":""}"><div class="lab">${i.down?"Turned down":"Turned up"}</div>${card(i.upcard)}</div></div>
-   <p class="prompt">${esc(i.prompt||(r2?SAID2[i.seat]:SAID[i.seat])+" What do you do?")}</p>
+   <p class="prompt"><b class="pscore${hotScore(i)?" hot8":""}">${scorePill(i)}.</b> ${esc(i.prompt||(r2?SAID2[i.seat]:SAID[i.seat])+" What do you do?")}</p>
    <div class="ans"><div class="verdict ${picked==null||picked===i.answer?"ok":"no"}">${esc(i.answer)}${srcOf(i)?` <span class="src">· ${srcOf(i)}</span>`:""}${picked!=null&&picked!==i.answer?` <span class="src">· you: <s>${esc(picked)}</s></span>`:""}</div>${explain(i)}</div>
    <button class="next" id="vclose">Back ⏎</button></div>`;
   document.body.appendChild(d);
@@ -365,10 +389,84 @@ function expressIds(){
   const C=window.cloudCounts||{};
   return ITEMS.map(i=>({id:i.id,k:(C[i.id]||0)+Math.random()*3})).sort((a,b)=>a.k-b.k).slice(0,20).map(x=>x.id).sort(()=>Math.random()-.5);
 }
+// Spot the loner (Michele, 2026-11-06): a page of hands; tap the ones you'd play alone, then check.
+// Every hand makes hearts trump; the question is alone or with partner. Graded by the EuchreIQ sim.
+const LONERS=[],LBY=Object.fromEntries(LONERS.map(x=>[x.id,x])),LN=8;
+const SEATHINT={S1:"left of the dealer; you lead",S2:"the dealer's partner",S3:"right of the dealer",S4:"you deal"};
+function lonerIds(){
+  for(let t=0;t<40;t++){
+    const sh=LONERS.map(x=>[Math.random(),x]).sort((a,b)=>a[0]-b[0]).map(y=>y[1]),pick=[],cases=new Set(),keys={};
+    for(const x of sh){if(pick.length>=LN)break;if(cases.has(x.case)||(keys[x.key]||0)>=2)continue;pick.push(x);cases.add(x.case);keys[x.key]=(keys[x.key]||0)+1}
+    const a=pick.filter(x=>x.answer==="alone").length;
+    if(pick.length===LN&&a>=2&&a<=LN-2)return pick.map(x=>x.id);
+  }
+  return LONERS.slice(0,LN).map(x=>x.id);
+}
+function lonerTile(x){
+  const sel=!!mode.sel[x.id],done=mode.done,ok=sel===(x.answer==="alone"),r2=x.round==="R2";
+  const f=v=>String(v)==="9"?`<span class="hot">9</span>`:esc(v);
+  return `<div class="lt${sel?" on":""}${done?(ok?" ok":" no"):""}" data-id="${x.id}" role="button" tabindex="${done?-1:0}" aria-pressed="${sel}">
+   <div class="lt-h"><b>${esc(x.seatName)}</b> · ${r2?"Round 2":"Round 1"} · You ${f(x.score[0])} · Them ${f(x.score[1])}</div>
+   <div class="lt-s">${esc(SEATHINT[x.seat])}</div>
+   <div class="hand sm">${x.hand.map(c=>card(c)).join("")}</div>
+   <div class="lt-u">${r2?`${esc(x.up)} turned down; you call ♥`:`${esc(x.up)} turned up; ${x.seat==="S4"?"you pick it up":"you order it up"}`}</div>
+   ${done?`<div class="lt-a"><b>${ok?"✓":"✕"} ${x.answer==="alone"?"Go alone":"Take partner"}</b>${sel!==(x.answer==="alone")?` <span class="you">· you: ${sel?"alone":"partner"}</span>`:""}<br>${esc(x.why)}</div>`:`<div class="lt-tag">${sel?"Alone ✓":"Tap if you'd go alone"}</div>`}
+  </div>`;
+}
+function lonerRender(){
+  const L=mode.ids.map(id=>LBY[id]),N=L.length,ok=L.filter(x=>!!mode.sel[x.id]===(x.answer==="alone")).length;
+  const el=document.getElementById("q");
+  el.innerHTML=`<div class="q">
+   <div class="where">Spot the loner</div>
+   <p class="prompt">Hearts is trump in every hand, and you're the one making it. Tap each hand you'd play alone, then check. <a class="lesson" href="index.html#r-any-spot-your-loners" target="_blank" rel="opener">Rules of thumb →</a></p>
+   ${mode.done?`<div class="lhero"><span class="big">${ok}<small> / ${N}</small></span> ${ok===N?"Perfect":ok/N>=.75?"Sharp eye":ok/N>=.5?"Getting there":"Keep looking"}</div>`:""}
+   <div class="lgrid">${L.map(lonerTile).join("")}</div>
+   <div class="row">${mode.done?`<button class="next" id="lagain">Another ${N} ⏎</button><button class="next skip" id="lshare">Share</button><button class="next skip" id="lback">Back to practice</button>`:`<button class="next" id="lcheck">Check my picks ⏎</button>`}</div>
+   <div id="shareOut"></div>
+   <p class="mhead">Graded by the <span class="iqb" aria-hidden="true">&#x2663;&#xFE0E;</span>EuchreIQ sim: each hand played alone and with partner on the same deals, by win chance at the score shown.</p></div>`;
+  if(!mode.done)el.querySelectorAll(".lt").forEach(t=>{const tog=()=>{mode.sel[t.dataset.id]=!mode.sel[t.dataset.id];lonerRender();const n=document.querySelector(`.lt[data-id="${t.dataset.id}"]`);if(n)n.focus()};t.onclick=tog;t.onkeydown=e=>{if(e.key===" "){e.preventDefault();e.stopPropagation();tog()}}});
+  const c=document.getElementById("lcheck");if(c)c.onclick=lonerCheck;
+  const a=document.getElementById("lagain");if(a){a.onclick=()=>setMode("loner");a.focus()}
+  const b=document.getElementById("lback");if(b)b.onclick=()=>setMode("practice");
+  const sh=document.getElementById("lshare");if(sh)sh.onclick=()=>{const who=window.cloudUser&&window.cloudUser.username;share(`I spotted ${ok}/${N} loners on the Euchre Drill. ${shareBase()}drill.html#loner`)};
+}
+function lonerCheck(){
+  mode.done=true;lonerRender();window.scrollTo({top:document.getElementById("q").offsetTop-10,behavior:"smooth"});
+  const L=mode.ids.map(id=>LBY[id]),ok=L.filter(x=>!!mode.sel[x.id]===(x.answer==="alone")).length;
+  window.onModeDone&&window.onModeDone("loner",ok,L.length,{picks:mode.ids.filter(id=>mode.sel[id])});
+}
+// Score matters (Michele, 2026-11-06): one hand at the top, then a call for each score.
+const SH=[];
+function scoreRender(){
+  const h=SH[mode.ix],el=document.getElementById("q");if(!h){el.innerHTML=`<div class="q empty">No hands here yet.</div>`;return}
+  const f=v=>String(v)==="9"?`<span class="hot">9</span>`:esc(v),N=h.rows.length,all=h.rows.every((r,k)=>mode.picks[k]);
+  const ok=h.rows.filter((r,k)=>r.ok.includes(mode.picks[k])).length;
+  el.innerHTML=`<div class="q">
+   <div class="qhead"><div><div class="where">${esc(h.seatName)}</div>
+    <div class="pills"><span class="pill r1">Round 1</span><span class="pill">Score matters · hand ${mode.ix+1} of ${SH.length}</span></div></div>${seatMap(h.seat)}</div>
+   <div class="table"><div><div class="lab">Your hand</div><div class="hand">${h.hand.map(c=>card(c)).join("")}</div></div>
+   <div class="upc"><div class="lab">Turned up</div>${card(h.up)}</div></div>
+   <p class="prompt">${esc(SAID[h.seat])} What's your call at each score?</p>
+   ${mode.done?`<div class="lhero"><span class="big">${ok}<small> / ${N}</small></span> ${ok===N?"Perfect":ok/N>=.75?"Sharp":ok/N>=.5?"Getting there":"Keep at it"}</div>`:""}
+   <div class="srows">${h.rows.map((r,k)=>{const p=mode.picks[k],good=r.ok.includes(p);
+     return `<div class="srow${mode.done?(good?" ok":" no"):""}"><span class="pill score">You ${f(r.score[0])} · Them ${f(r.score[1])}</span>
+      <div class="sopts">${h.calls.map(c=>`<button class="opt${p===c&&!mode.done?" on":""}${mode.done&&r.ok.includes(c)?" right":""}${mode.done&&p===c&&!r.ok.includes(c)?" wrong":""}" data-r="${k}" data-c="${esc(c)}"${mode.done?" disabled":""}>${esc(c)}</button>`).join("")}</div>
+      ${mode.done?`<div class="swhy">${esc(r.why)}</div>`:""}</div>`}).join("")}</div>
+   <div class="row">${mode.done?`<button class="next" id="snext">Next hand ⏎</button><button class="next skip" id="lback">Back to practice</button>`:`<button class="next" id="scheck"${all?"":" disabled"}>Check my calls ⏎</button>`}</div>
+   ${h.lesson?`<a class="lesson" href="index.html?from=${esc(h.id)}#${encodeURIComponent(h.lesson)}" target="_blank" rel="opener">Go to lesson →</a>`:""}
+   <p class="mhead">Graded by the <span class="iqb" aria-hidden="true">&#x2663;&#xFE0E;</span>EuchreIQ sim: each call played at each score, with the bots bidding for that score, by chance to win the game. Calls within 1 game in 100 are a toss-up and both count.</p></div>`;
+  if(!mode.done)el.querySelectorAll(".srow .opt").forEach(b=>b.onclick=()=>{mode.picks[+b.dataset.r]=b.dataset.c;scoreRender()});
+  const c=document.getElementById("scheck");if(c)c.onclick=()=>{mode.done=true;scoreRender();window.onModeDone&&window.onModeDone("score",ok2(),N,{hand:h.id})};
+  const n=document.getElementById("snext");if(n){n.onclick=()=>setMode("score");n.focus()}
+  const b=document.getElementById("lback");if(b)b.onclick=()=>setMode("practice");
+  function ok2(){return h.rows.filter((r,k)=>r.ok.includes(mode.picks[k])).length}
+}
 function setMode(m){
   document.querySelectorAll("#modes button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.m===m));
   document.getElementById("practiceCtl").hidden=m!=="practice";chain=null;variantOf=null;
   if(m==="practice"){mode=null;document.getElementById("mhead").textContent="";next();return}
+  if(m==="score"){const ix=(st.scoreIx||0)%Math.max(1,SH.length);st.scoreIx=ix+1;save();mode={kind:"score",ix,picks:{},done:false};document.getElementById("mhead").textContent="";scoreRender();return}
+  if(m==="loner"){mode={kind:"loner",ids:lonerIds(),sel:{},done:false};document.getElementById("mhead").textContent="";lonerRender();return}
   if(m==="daily"){const d=nyDate();st.daily=st.daily&&st.daily.d===d?st.daily:{d,ids:dailyIds(d),picks:{}};mode={kind:"daily",ids:st.daily.ids,picks:st.daily.picks};save()}
   else mode={kind:"express",ids:expressIds(),picks:{}};
   modeNext();
@@ -476,6 +574,8 @@ function toast(t,shareText){const d=document.createElement("div");d.className="t
 document.addEventListener("keydown",e=>{
   if(document.getElementById("vmodal")){if(e.key==="Escape"||e.key==="Enter"){e.preventDefault();closeView()}return}
   if(document.body.classList.contains("locked")||document.getElementById("cmodal"))return;
+  if(mode&&mode.kind==="score"){if(e.key==="Enter"&&!/^(TEXTAREA|INPUT|A|BUTTON)$/.test(e.target.tagName)){e.preventDefault();const x=document.getElementById("scheck")||document.getElementById("snext");if(x&&!x.disabled)x.click()}return}
+  if(mode&&mode.kind==="loner"){if(e.key==="Enter"&&!/^(TEXTAREA|INPUT|A)$/.test(e.target.tagName)){e.preventDefault();(document.getElementById("lcheck")||document.getElementById("lagain")||{click(){}}).click()}return}
   if(e.metaKey||e.ctrlKey||e.altKey)return;
   if(/^(TEXTAREA|INPUT)$/.test(e.target.tagName))return;
   if(e.key==="f"||e.key==="F"){e.preventDefault();toggleFlag();return}
@@ -493,7 +593,10 @@ window.drill={ITEMS,SKILLS,
   mastered:()=>[...masteredSet()],learnedCount:()=>ITEMS.filter(learned).length,setMode};
 skills();setMode("practice");review();
 // Open one hand from a link (#q=<id>), e.g. a flag on the results page (Michele, 2026-11-06).
-function openFromHash(){const m=location.hash.match(/^#q=([0-9a-f]{8})$/);if(!m||!BYID[m[1]])return;
+// A mode with no hands yet (its sim still running) stays hidden.
+if(!LONERS.length)document.querySelector('#modes [data-m="loner"]').hidden=true;
+if(!SH.length)document.querySelector('#modes [data-m="score"]').hidden=true;
+function openFromHash(){if(location.hash==="#loner"&&LONERS.length){setMode("loner");return}if(location.hash==="#score"&&SH.length){setMode("score");return}const m=location.hash.match(/^#q=([0-9a-f]{8})$/);if(!m||!BYID[m[1]])return;
   if(mode)setMode("practice");chain=null;variantOf=null;cur=BYID[m[1]];render();progress();
   document.getElementById("q").scrollIntoView({block:"start"})}
 openFromHash();window.addEventListener("hashchange",openFromHash);
