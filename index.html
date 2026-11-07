@@ -68,6 +68,7 @@ nav.seats a.active{background:var(--felt);border-color:var(--felt);color:var(--c
 .dot{width:10px;height:10px;border-radius:2px;display:inline-block;flex-shrink:0}
 section.seat{margin-top:40px;scroll-margin-top:64px}
 article.rule{scroll-margin-top:72px}
+#backDrill{position:fixed;left:16px;bottom:16px;z-index:20;font-family:var(--display);font-weight:600;font-size:16px;background:var(--felt);color:var(--card);text-decoration:none;border-radius:999px;padding:10px 18px;box-shadow:0 4px 14px rgba(0,0,0,.2)}
 article.rule:target{outline:2px solid var(--felt);outline-offset:4px;border-radius:8px}
 section.seat>h2{font-size:28px;border-bottom:3px solid var(--ink);padding-bottom:4px}
 .phase{margin-top:22px}
@@ -222,6 +223,11 @@ function spy(){const navH=document.getElementById("nav").offsetHeight+8;let cur=
   if(cur){const n=document.getElementById("nav");const l=cur.offsetLeft-n.offsetLeft;if(l<n.scrollLeft||l+cur.offsetWidth>n.scrollLeft+n.clientWidth)n.scrollLeft=l-12;}}
 window.addEventListener("scroll",spy,{passive:true});spy();
 if(location.hash){const t=document.getElementById(location.hash.slice(1));if(t)t.scrollIntoView();}
+// Came from a drill hand (Go to lesson): offer a way back to it (Michele, 2026-11-06).
+{const from=new URLSearchParams(location.search).get("from");
+ if(/^[0-9a-f]{8}$/.test(from||"")){const a=document.createElement("a");a.id="backDrill";a.href="drill.html#q="+from;a.textContent="← Back to your hand";
+  a.onclick=e=>{if(window.opener&&!window.opener.closed){e.preventDefault();try{window.opener.focus()}catch(x){}window.close();setTimeout(()=>{location.href=a.href},300)}};
+  document.body.appendChild(a)}}
 </script>
 <button class="totop" id="totop" aria-label="Back to top">↑ Top</button>
 <script>

@@ -74,6 +74,11 @@ a{color:var(--felt)}
 .src{font-weight:400;color:var(--muted);font-size:14px}
 .ev{margin:6px 0 0;font-size:13.5px;color:var(--muted)}
 .next{font-family:var(--display);font-weight:600;font-size:16px;padding:8px 18px;margin:14px 0 0;background:var(--felt);border-color:var(--felt);color:var(--card)}
+.vset tr.view{cursor:pointer}
+.vset tr.view:hover td{background:var(--card)}
+#vmodal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-start;justify-content:center;overflow:auto;padding:24px 12px}
+#vmodal .cm-back{position:fixed;inset:0;background:rgba(0,0,0,.35)}
+#vmodal .vbox{position:relative;background:var(--card);border-radius:14px;padding:20px;max-width:640px;width:100%;box-shadow:0 8px 30px rgba(0,0,0,.25)}
 .next.skip{background:var(--card);color:var(--felt);margin-left:8px}
 .foot{margin:24px 0 0;font-size:12.5px;color:var(--muted)}
 body.locked #drillMain,body.locked #reset{display:none}
@@ -242,8 +247,7 @@ function pick(skipFam){
   const due=P.filter(i=>rec(i)&&rec(i).due<=st.n&&(!cur||i.id!==cur.id));
   if(due.length){due.sort((a,b)=>rec(a).b-rec(b).b||rec(a).due-rec(b).due);const lo=due.filter(i=>rec(i).b===rec(due[0]).b);return lo[Math.floor(Math.random()*lo.length)]}
   const fresh=P.filter(i=>!rec(i));
-  // Any variant can open its set, not only the first (Michele, 2026-11-06).
-  if(fresh.length)return fresh[Math.floor(Math.random()*fresh.length)];
+  if(fresh.length){const f0=fresh.filter(i=>!incVar()||i.fam==null||i.famOrder===Math.min(...fresh.filter(x=>x.fam===i.fam).map(x=>x.famOrder)));return (f0.length?f0:fresh)[Math.floor(Math.random()*(f0.length?f0:fresh).length)]}
   const rest=P.filter(i=>!cur||i.id!==cur.id).sort((a,b)=>rec(a).due-rec(b).due);
   return rest[0]||P[0];
 }
@@ -277,7 +281,9 @@ function render(){
   if(!cur){el.innerHTML=`<div class="q empty">No hands here yet.</div>`;return}
   const i=cur,r2=i.round==="R2";
   const vf=variantOf&&variantOf.fam===i.fam&&incVar()?variantOf:null;
-  if(i.fam==null)chain=null;else if(!chain||chain.fam!==i.fam)chain={fam:i.fam,done:{}};
+  // A set plays back to back only on a first look; a hand that comes back for review shows alone,
+  // so knowing it doesn't lean on the hand before (Michele, 2026-11-06).
+  if(i.fam==null||mode)chain=null;else if(!chain||chain.fam!==i.fam)chain=!rec(i)&&incVar()?{fam:i.fam,done:{}}:null;
   const prompt=i.prompt||(r2?SAID2[i.seat]:SAID[i.seat])+" What do you do?";
   const swap=vf&&vf.upcard===i.upcard&&i.hand.filter(x=>!vf.hand.includes(x)).length<=2;
   el.innerHTML=`<div class="q">
@@ -297,6 +303,30 @@ function render(){
   document.getElementById("flag").onclick=toggleFlag;
   answered=false;fpanel(false);
 }
+function srcOf(i){return i.source==="Sim"?`sim${i.strength&&i.strength!=="opinion"?", "+esc(i.strength):""}`:i.source==="Experts"?"experts":""}
+// The lesson link carries the hand, so the lesson page can offer a way back to it (Michele, 2026-11-06).
+function explain(i){return `<div class="rule"><b>Rule:</b> ${esc(i.head||i.ruleText)}</div>
+    ${i.variation?`<div class="rule"><b>Variation:</b> ${esc(i.variation)}</div>`:""}
+    ${i.why?`<div class="why">${esc(i.why)}</div>`:""}
+    ${i.ev?`<div class="ev"><b>Sim figures:</b> ${esc(i.ev)}</div>`:""}
+    ${i.caveat?`<div class="caveat"><b>Expert note:</b> ${esc(i.caveat)}</div>`:""}
+    ${i.lesson?`<a class="lesson" href="index.html?from=${esc(i.id)}#${encodeURIComponent(i.lesson)}" target="_blank" rel="opener">Go to lesson →</a>`:""}`}
+// Look back at a hand from the variant set without answering it again (Michele, 2026-11-06).
+function viewHand(id){
+  const i=BYID[id];if(!i)return;closeView();const r2=i.round==="R2",picked=chain&&chain.done[id];
+  const d=document.createElement("div");d.id="vmodal";
+  d.innerHTML=`<div class="cm-back"></div><div class="vbox" role="dialog" aria-modal="true" aria-label="Variant">
+   <div class="qhead"><div><div class="where">${esc(i.seatName)}</div>
+    <div class="pills"><span class="pill ${r2?"r2":"r1"}">${i.round==="Play"?"Play":r2?"Round 2":"Round 1"}</span><span class="pill score">${scorePill(i)}</span></div></div>${seatMap(i.seat)}</div>
+   <div class="table"><div><div class="lab">Your hand</div><div class="hand">${i.hand.map(c=>card(c,false,(i.played||[]).includes(c))).join("")}</div></div>
+   <div class="upc${i.down?" down":""}"><div class="lab">${i.down?"Turned down":"Turned up"}</div>${card(i.upcard)}</div></div>
+   <p class="prompt">${esc(i.prompt||(r2?SAID2[i.seat]:SAID[i.seat])+" What do you do?")}</p>
+   <div class="ans"><div class="verdict ${picked==null||picked===i.answer?"ok":"no"}">${esc(i.answer)}${srcOf(i)?` <span class="src">· ${srcOf(i)}</span>`:""}${picked!=null&&picked!==i.answer?` <span class="src">· you: <s>${esc(picked)}</s></span>`:""}</div>${explain(i)}</div>
+   <button class="next" id="vclose">Back ⏎</button></div>`;
+  document.body.appendChild(d);
+  d.querySelector(".cm-back").onclick=closeView;document.getElementById("vclose").onclick=closeView;document.getElementById("vclose").focus();
+}
+function closeView(){const d=document.getElementById("vmodal");if(d){d.remove();const n=document.getElementById("next");if(n)n.focus()}}
 function choose(k){
   if(answered)return;answered=true;
   const i=cur,pickd=i.options[k],ok=pickd===i.answer;
@@ -312,20 +342,16 @@ function choose(k){
   const after=masteredSet();
   for(const k2 of after)if(!before.has(k2)&&!st.badges[k2]){st.badges[k2]=d;{const nm=SKILLS.find(s=>s[0]===k2)[1],who=window.cloudUser&&window.cloudUser.username;toast(`Skill mastered: ${nm} ★`,`I mastered ${nm} on the Euchre Drill ★ ${shareBase()}score.html?${new URLSearchParams({k:"skill",sk:nm,...(who?{u:who}:{})})}`)}}
   save();window.onAnswer&&window.onAnswer(i,pickd,ok,mode?mode.kind:"practice");
-  const src=i.source==="Sim"?`sim${i.strength&&i.strength!=="opinion"?", "+esc(i.strength):""}`:i.source==="Experts"?"experts":"";
+  const src=srcOf(i);
   const more=mode?0:remaining().length,last=mode&&Object.keys(mode.picks).length>=mode.ids.length;
   document.getElementById("ans").innerHTML=`<div class="ans">
     <div class="verdict ${ok?"ok":"no"}">${ok?"Right":"Not this time"}${src?` <span class="src">· ${src}</span>`:""}</div>
-    <div class="rule"><b>Rule:</b> ${esc(i.head||i.ruleText)}</div>
-    ${i.variation?`<div class="rule"><b>Variation:</b> ${esc(i.variation)}</div>`:""}
-    ${i.why?`<div class="why">${esc(i.why)}</div>`:""}
-    ${i.ev?`<div class="ev"><b>Sim figures:</b> ${esc(i.ev)}</div>`:""}
-    ${i.caveat?`<div class="caveat"><b>Expert note:</b> ${esc(i.caveat)}</div>`:""}
-    ${i.lesson?`<a class="lesson" href="index.html#${encodeURIComponent(i.lesson)}" target="_blank" rel="noopener">Go to lesson →</a>`:""}
+    ${explain(i)}
     ${incVar()&&!mode?vsetHtml(i):""}
     </div><button class="next" id="next">${more?"Next variant ⏎":last?"See your score ⏎":"Next hand ⏎"}</button>${more?`<button class="next skip" id="skipVar" title="Skip the rest of this hand's variants (S)">Skip variants</button>`:""}`;
   document.getElementById("next").onclick=next;document.getElementById("next").focus();
   const sk=document.getElementById("skipVar");if(sk)sk.onclick=skipVariants;
+  document.querySelectorAll("tr.view").forEach(t=>{t.onclick=()=>viewHand(t.dataset.view);t.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();e.stopPropagation();viewHand(t.dataset.view)}}});
   progress();skills();
 }
 function nyDate(){return new Date().toLocaleDateString("en-CA",{timeZone:"America/New_York"})}
@@ -367,7 +393,7 @@ function summary(){
      <div class="mark${r?"":" no"}" aria-label="${r?"Right":"Wrong"}">${r?"✓":"✕"}</div>
      <div><div class="meta"><span class="seat">${esc(i.seatName)}</span><span class="pill ${r2?"r2":"r1"}">${i.round==="Play"?"Play":r2?"Round 2":"Round 1"}</span><span class="pill score">${scorePill(i)}</span></div>
       <div class="mini">${i.hand.map(c=>card(c,false,(i.played||[]).includes(c))).join("")}<span class="upc-mini">${card(i.upcard).replace('class="c','class="c up'+(i.down?" down":""))}</span></div>
-      <div class="pickans"><b>${esc(i.answer)}</b>${r?"":` <span class="you">· you: <s>${esc(p)}</s></span>`}</div>${i.lesson?`<a class="lesson" href="index.html#${encodeURIComponent(i.lesson)}" target="_blank" rel="noopener">Go to lesson →</a>`:""}</div></div>`}).join("")}</div>
+      <div class="pickans"><b>${esc(i.answer)}</b>${r?"":` <span class="you">· you: <s>${esc(p)}</s></span>`}</div>${i.lesson?`<a class="lesson" href="index.html?from=${esc(i.id)}#${encodeURIComponent(i.lesson)}" target="_blank" rel="opener">Go to lesson →</a>`:""}</div></div>`}).join("")}</div>
    <div class="foot"><div class="row"><button class="next" id="share">Share</button>${mode.kind==="express"?`<button class="next" id="again">Another 20</button>`:""}<button class="next" id="back" style="background:var(--card);color:var(--felt)">Back to practice</button></div><div id="shareOut"></div>
    ${mode.kind==="daily"?`<p class="mhead">Same five hands for everyone today. New hands tomorrow.</p>`:""}</div></div>`;
   document.getElementById("share").onclick=()=>share(text);
@@ -393,7 +419,8 @@ function vsetHtml(i){
   const left=F.filter(m=>!(m.id in chain.done)).length;
   const rows=F.map(m=>{const me=m.id===i.id,seen=m.id in chain.done;
     const ans=seen?`${esc(m.answer)}<span class="mk">${chain.done[m.id]===m.answer?"✓":"✗"}</span>`:`<span class="q2">coming up</span>`;
-    return `<tr class="${me?"now":""}"><td>${esc([m.vlabel,scoreTxt(m)].filter(Boolean).join(" · "))}${me?" ← this one":""}</td><td>${ans}</td></tr>`}).join("");
+    const v=seen&&!me;
+    return `<tr class="${me?"now":""}${v?" view":""}"${v?` data-view="${esc(m.id)}" tabindex="0" title="Look at this hand again"`:""}><td>${esc([m.vlabel,scoreTxt(m)].filter(Boolean).join(" · "))}${me?" ← this one":v?' <span class="q2">· view</span>':""}</td><td>${ans}</td></tr>`}).join("");
   return `<div class="vset"><span class="k">Variant set: ${esc(i.famName)}</span>${left?` <span class="q2">· ${left} still to play</span>`:""}<table>${rows}</table></div>`;
 }
 function masteredSet(){return new Set(SKILLS.map(s=>s[0]).filter(k=>{const P=ITEMS.filter(i=>i.tags.includes(k));return P.length&&P.every(learned)}))}
@@ -445,6 +472,7 @@ function toast(t,shareText){const d=document.createElement("div");d.className="t
   if(shareText){const b=document.createElement("button");b.textContent="Share";b.onclick=()=>share(shareText);d.appendChild(b)}
   document.body.appendChild(d);setTimeout(()=>d.remove(),shareText?8000:3500)}
 document.addEventListener("keydown",e=>{
+  if(document.getElementById("vmodal")){if(e.key==="Escape"||e.key==="Enter"){e.preventDefault();closeView()}return}
   if(document.body.classList.contains("locked")||document.getElementById("cmodal"))return;
   if(e.metaKey||e.ctrlKey||e.altKey)return;
   if(/^(TEXTAREA|INPUT)$/.test(e.target.tagName))return;
