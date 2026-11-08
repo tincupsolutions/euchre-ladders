@@ -549,9 +549,11 @@ function fpanel(open){
   if(!f&&!open){el.innerHTML="";return}
   el.innerHTML=`<div class="fpanel"><div class="ftypes">${FTYPES.map(([k,l])=>`<button data-t="${k}" aria-pressed="${f&&f.type===k}">${l}</button>`).join("")}</div>
    <textarea class="note" id="note" placeholder="Tell us why, or what you'd like explained.">${esc(f?f.note:"")}</textarea>
-   ${f?`<button class="rm" id="unflag">Remove flag</button>`:""}</div>`;
+   ${f?`<button class="rm" id="unflag">Remove flag</button>`:""}</div>${f&&!answered?`<button class="next skip" id="fskip">Skip this hand</button>`:""}`;
   el.querySelectorAll(".ftypes button").forEach(b=>b.onclick=()=>{setFlag({type:b.dataset.t});fpanel(true)});
   document.getElementById("note").oninput=e=>setFlag({note:e.target.value},true);
+  // Flagged before answering: move on without answering (Michele, 2026-11-08).
+  const sk=document.getElementById("fskip");if(sk)sk.onclick=()=>{if(mode)return modeNext();const fam=cur.fam;chain=null;variantOf=null;cur=pick(fam);render();progress()};
   const u=document.getElementById("unflag");if(u)u.onclick=()=>{delete flags[cur.id];saveFlags();window.onFlag&&window.onFlag(cur.id,null);el.innerHTML="";flagBtn();review();skills()};
 }
 function setFlag(ch,quiet){
